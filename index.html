@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClientHub — Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0b0f1a;
+    --surface: #111827;
+    --surface2: #1a2236;
+    --border: #1e2d45;
+    --accent: #3b82f6;
+    --accent-glow: rgba(59,130,246,0.15);
+    --accent2: #06b6d4;
+    --green: #10b981;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --text: #f0f4ff;
+    --muted: #6b7a99;
+    --muted2: #3d4f6b;
+    --font: 'Inter', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  /* ── DEV SWITCHER ── */
+  #dev-bar {
+    background: #1a0a3b;
+    border-bottom: 1px solid #3b1fa0;
+    padding: 8px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: #a78bfa;
+    font-family: var(--mono);
+  }
+  #dev-bar span { color: #7c3aed; }
+  .dev-btn {
+    background: transparent;
+    border: 1px solid #4c1d95;
+    color: #a78bfa;
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 11px;
+    transition: all 0.2s;
+  }
+  .dev-btn.active { background: #4c1d95; color: #ede9fe; }
+  .dev-btn:hover { background: #3b0d8f; }
+
+  /* ── LAYOUT ── */
+  #app { display: flex; height: calc(100vh - 37px); }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
+  .logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-mark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .logo-icon {
+    width: 30px; height: 30px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  .nav-section { padding: 12px 12px 0; }
+  .nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 8px;
+    margin-bottom: 6px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s;
+    margin-bottom: 2px;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent-glow); color: var(--accent); }
+  .nav-item .icon { width: 18px; text-align: center; font-size: 15px; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 12px;
+    border-top: 1px solid var(--border);
+  }
+  .user-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 8px;
+  }
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+    flex-shrink: 0;
+  }
+  .user-info { overflow: hidden; }
+  .user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-email { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ── MAIN ── */
+  #main {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .page-title { font-size: 18px; font-weight: 600; }
+  .topbar-actions { display: flex; align-items: center; gap: 12px; }
+  .badge {
+    background: var(--accent-glow);
+    color: var(--accent);
+    border: 1px solid rgba(59,130,246,0.3);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* ── CONTENT ── */
+  .content { padding: 32px; flex: 1; }
+
+  /* ── VIEWS ── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── STAT CARDS ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--muted2); }
+  .stat-label { font-size: 12px; color: var(--muted); font-weight: 500; margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; font-family: var(--mono); }
+  .stat-delta {
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .delta-up { color: var(--green); }
+  .delta-down { color: var(--red); }
+
+  /* ── CHART AREA ── */
+  .chart-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 28px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .card-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  /* Bar Chart */
+  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 120px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .bar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    background: linear-gradient(to top, var(--accent), var(--accent2));
+    opacity: 0.85;
+    transition: opacity 0.2s;
+    position: relative;
+    cursor: pointer;
+    min-height: 4px;
+  }
+  .bar:hover { opacity: 1; }
+  .bar-label { font-size: 10px; color: var(--muted); font-family: var(--mono); }
+
+  /* Donut placeholder */
+  .donut-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 10px 0; }
+  .donut {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: conic-gradient(var(--accent) 0% 42%, var(--accent2) 42% 68%, var(--green) 68% 85%, var(--muted2) 85% 100%);
+    position: relative;
+  }
+  .donut::after {
+    content: '';
+    position: absolute;
+    inset: 22px;
+    background: var(--surface);
+    border-radius: 50%;
+  }
+  .donut-legend { width: 100%; }
+  .legend-item { display: flex; align-items: center; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; margin-right: 8px; display: inline-block; }
+
+  /* ── TABLE ── */
+  .table-card { margin-bottom: 28px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left;
+    padding: 10px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(30,45,69,0.5);
+    color: var(--text);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .pill-green { background: rgba(16,185,129,0.12); color: var(--green); }
+  .pill-yellow { background: rgba(245,158,11,0.12); color: var(--yellow); }
+  .pill-red { background: rgba(239,68,68,0.12); color: var(--red); }
+  .pill-blue { background: rgba(59,130,246,0.12); color: var(--accent); }
+
+  /* ── SUPPORT TAB ── */
+  .support-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .form-group { margin-bottom: 18px; }
+  .form-label { font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; display: block; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: var(--font);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 120px; }
+  .form-select option { background: var(--surface2); }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--muted2); color: var(--text); }
+
+  .ticket-list { display: flex; flex-direction: column; gap: 12px; }
+  .ticket-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .ticket-item:hover { border-color: var(--muted2); }
+  .ticket-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .ticket-title { font-size: 13px; font-weight: 600; }
+  .ticket-id { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .ticket-preview { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* ── BILLING TAB ── */
+  .billing-layout { display: flex; flex-direction: column; gap: 24px; }
+  .plan-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .plan-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .plan-info p { font-size: 13px; color: var(--muted); }
+  .plan-price { text-align: right; }
+  .plan-price .amount { font-size: 32px; font-weight: 700; font-family: var(--mono); }
+  .plan-price .period { font-size: 13px; color: var(--muted); }
+
+  .stripe-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #635bff;
+    color: white;
+    border: none;
+    padding: 13px 24px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.2s;
+  }
+  .stripe-btn:hover { background: #5046e5; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,91,255,0.35); }
+  .stripe-logo { font-size: 18px; }
+
+  .invoice-table { width: 100%; }
+
+  /* ── ADMIN TAB ── */
+  .admin-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; }
+  .invite-form { display: flex; flex-direction: column; gap: 14px; }
+  .invite-row { display: flex; gap: 10px; }
+  .invite-row .form-input { flex: 1; }
+  .client-list { display: flex; flex-direction: column; gap: 10px; }
+  .client-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .client-info { display: flex; align-items: center; gap: 12px; }
+  .client-actions { display: flex; gap: 8px; }
+  .btn-sm {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: var(--font);
+    transition: all 0.15s;
+  }
+  .btn-sm-danger { background: rgba(239,68,68,0.12); color: var(--red); }
+  .btn-sm-danger:hover { background: rgba(239,68,68,0.25); }
+  .btn-sm-muted { background: var(--surface2); color: var(--muted); }
+  .btn-sm-muted:hover { color: var(--text); }
+
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-size: 15px; font-weight: 700; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--green);
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    z-index: 1000;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(16px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  /* ── RANGE BUTTONS ── */
+  .range-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--mono);
+    transition: all 0.15s;
+  }
+  .range-btn:hover { border-color: var(--muted2); color: var(--text); }
+  .range-btn.active { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
+
+  /* ── VISITOR LINE CHART ── */
+  .visitor-line { fill: none; stroke: url(#lineGrad); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .visitor-area { fill: url(#areaGrad); }
+  .visitor-dot { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+
+  /* ── RETENTION GRID ── */
+  .ret-grid { display: grid; gap: 3px; }
+  .ret-row { display: flex; align-items: center; gap: 3px; }
+  .ret-label { font-size: 10px; color: var(--muted); font-family: var(--mono); width: 40px; flex-shrink: 0; }
+  .ret-cell {
+    width: 36px; height: 26px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-family: var(--mono); font-weight: 600;
+    color: rgba(255,255,255,0.85);
+  }
+  .ret-head { font-size: 10px; color: var(--muted); font-family: var(--mono); text-align: center; width: 36px; }
+
+  /* ── SESSION BARS ── */
+  .session-row { display: flex; flex-direction: column; gap: 5px; }
+  .session-meta { display: flex; justify-content: space-between; font-size: 12px; }
+  .session-source { color: var(--text); font-weight: 500; }
+  .session-time { color: var(--muted); font-family: var(--mono); }
+  .session-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .session-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 48px; text-align: center; color: var(--muted);
+  }
+  .empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-text { font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- DEV SWITCHER -->
+<div id="dev-bar">
+  <span>⚡ DEV MODE</span>
+  — Switch view:
+  <button class="dev-btn active" onclick="switchView('client')">Client Dashboard</button>
+  <button class="dev-btn" onclick="switchView('admin')">Admin Panel</button>
+</div>
+
+<div id="app">
+
+  <!-- ── SIDEBAR ── -->
+  <div id="sidebar">
+    <div class="logo">
+      <div class="logo-mark">
+        <div class="logo-icon">◈</div>
+        ClientHub
+      </div>
+    </div>
+
+    <!-- CLIENT NAV -->
+    <div id="client-nav">
+      <div class="nav-section" style="margin-top:12px;">
+        <div class="nav-label">Dashboard</div>
+        <button class="nav-item active" onclick="showTab('analytics')">
+          <span class="icon">📊</span> Analytics
+        </button>
+        <button class="nav-item" onclick="showTab('support')">
+          <span class="icon">💬</span> Support
+        </button>
+        <button class="nav-item" onclick="showTab('billing')">
+          <span class="icon">💳</span> Billing
+        </button>
+      </div>
+    </div>
+
+    <!-- ADMIN NAV -->
+    <div id="admin-nav" style="display:none;">
+      <div class="nav-section" style="margin-top:12px;">
+        <div class="nav-label">Admin</div>
+        <button class="nav-item active" onclick="showAdminTab('clients')">
+          <span class="icon">👥</span> Clients
+        </button>
+        <button class="nav-item" onclick="showAdminTab('overview')">
+          <span class="icon">📈</span> Overview
+        </button>
+        <button class="nav-item" onclick="showAdminTab('settings')">
+          <span class="icon">⚙️</span> Settings
+        </button>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="avatar" id="user-avatar">JD</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name">Jane Doe</div>
+          <div class="user-email" id="user-email">jane@company.com</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MAIN ── -->
+  <div id="main">
+    <div class="topbar">
+      <div class="page-title" id="page-title">Analytics</div>
+      <div class="topbar-actions">
+        <span class="badge" id="view-badge">Client View</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ════ CLIENT: ANALYTICS ════ -->
+      <div class="view active" id="view-analytics">
+
+        <!-- date range picker -->
+        <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:20px;gap:8px;">
+          <span style="font-size:12px;color:var(--muted);">Range:</span>
+          <div style="display:flex;gap:4px;" id="range-tabs">
+            <button class="range-btn" onclick="setRange('7d',this)">7d</button>
+            <button class="range-btn active" onclick="setRange('30d',this)">30d</button>
+            <button class="range-btn" onclick="setRange('90d',this)">90d</button>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Visitors</div>
+            <div class="stat-value" style="color:#3b82f6" id="stat-visitors">18,340</div>
+            <div class="stat-delta delta-up">↑ 11.2% vs last period</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Unique Visitors</div>
+            <div class="stat-value" id="stat-unique">11,820</div>
+            <div class="stat-delta delta-up">↑ 7.5% vs last period</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Retention Rate</div>
+            <div class="stat-value" style="color:#10b981" id="stat-retention">64.5%</div>
+            <div class="stat-delta delta-up">↑ 3.1% vs last period</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Bounce Rate</div>
+            <div class="stat-value" style="color:#f59e0b" id="stat-bounce">38.2%</div>
+            <div class="stat-delta delta-down">↓ 1.8% vs last period</div>
+          </div>
+        </div>
+
+        <div class="chart-row">
+          <div class="card">
+            <div class="card-title">Visitors Over Time</div>
+            <div class="card-subtitle" id="chart-subtitle">Daily unique visitors — last 30 days</div>
+            <div style="position:relative;height:130px;">
+              <canvas id="visitor-chart" style="width:100%;height:130px;"></canvas>
+              <svg id="visitor-svg" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;"></svg>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Traffic Sources</div>
+            <div class="card-subtitle">Where your visitors come from</div>
+            <div class="donut-wrap">
+              <div class="donut" style="background: conic-gradient(#3b82f6 0% 38%, #10b981 38% 60%, #06b6d4 60% 76%, #8b5cf6 76% 89%, #3d4f6b 89% 100%);"></div>
+              <div class="donut-legend" style="width:100%;">
+                <div class="legend-item"><span><span class="legend-dot" style="background:#3b82f6;"></span>Organic Search</span><span style="font-family:var(--mono);font-size:11px;">38%</span></div>
+                <div class="legend-item"><span><span class="legend-dot" style="background:#10b981;"></span>Direct</span><span style="font-family:var(--mono);font-size:11px;">22%</span></div>
+                <div class="legend-item"><span><span class="legend-dot" style="background:#06b6d4;"></span>Social</span><span style="font-family:var(--mono);font-size:11px;">16%</span></div>
+                <div class="legend-item"><span><span class="legend-dot" style="background:#8b5cf6;"></span>Referral</span><span style="font-family:var(--mono);font-size:11px;">13%</span></div>
+                <div class="legend-item"><span><span class="legend-dot" style="background:#3d4f6b;"></span>Other</span><span style="font-family:var(--mono);font-size:11px;">11%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- retention + top pages row -->
+        <div class="chart-row" style="margin-bottom:28px;">
+          <div class="card">
+            <div class="card-title">Retention Cohorts</div>
+            <div class="card-subtitle">% of visitors who returned each subsequent week</div>
+            <div id="retention-grid" style="margin-top:8px;"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Avg. Session Duration</div>
+            <div class="card-subtitle">By traffic source this month</div>
+            <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px;" id="session-bars"></div>
+          </div>
+        </div>
+
+        <div class="card table-card">
+          <div class="section-header">
+            <div>
+              <div class="card-title">Top Pages</div>
+              <div class="card-subtitle" style="margin-bottom:0">Most visited pages this period</div>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Page</th>
+                <th>Visitors</th>
+                <th>Unique</th>
+                <th>Avg. Time</th>
+                <th>Bounce</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="font-family:var(--mono);font-size:12px;">/home</td><td>5,821</td><td>4,102</td><td>2m 44s</td><td><span class="status-pill pill-yellow">41%</span></td></tr>
+              <tr><td style="font-family:var(--mono);font-size:12px;">/features</td><td>3,440</td><td>2,890</td><td>3m 12s</td><td><span class="status-pill pill-green">28%</span></td></tr>
+              <tr><td style="font-family:var(--mono);font-size:12px;">/blog/getting-started</td><td>2,914</td><td>2,710</td><td>4m 58s</td><td><span class="status-pill pill-green">19%</span></td></tr>
+              <tr><td style="font-family:var(--mono);font-size:12px;">/pricing</td><td>2,210</td><td>1,980</td><td>1m 55s</td><td><span class="status-pill pill-yellow">52%</span></td></tr>
+              <tr><td style="font-family:var(--mono);font-size:12px;">/docs</td><td>1,640</td><td>1,320</td><td>6m 02s</td><td><span class="status-pill pill-green">11%</span></td></tr>
+              <tr><td style="font-family:var(--mono);font-size:12px;">/about</td><td>980</td><td>870</td><td>1m 28s</td><td><span class="status-pill pill-red">68%</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ════ CLIENT: SUPPORT ════ -->
+      <div class="view" id="view-support">
+        <div class="support-layout">
+          <div class="card">
+            <div class="card-title">Submit a Ticket</div>
+            <div class="card-subtitle">Our team typically responds within 24 hours</div>
+            <div class="form-group">
+              <label class="form-label">Subject</label>
+              <input class="form-input" type="text" placeholder="Brief description of your issue">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <select class="form-select">
+                <option>Billing & Payments</option>
+                <option>Technical Issue</option>
+                <option>Account Access</option>
+                <option>Feature Request</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Priority</label>
+              <select class="form-select">
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+                <option>Critical</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description</label>
+              <textarea class="form-textarea" placeholder="Describe your issue in detail..."></textarea>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <button class="btn-primary" onclick="submitTicket()">⬆ Submit Ticket</button>
+              <button class="btn-secondary">Clear</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="section-header">
+              <div class="section-title">Your Tickets</div>
+              <span class="status-pill pill-blue">3 Open</span>
+            </div>
+            <div class="ticket-list">
+              <div class="ticket-item">
+                <div class="ticket-top">
+                  <div class="ticket-title">API rate limit exceeded</div>
+                  <span class="status-pill pill-blue">Open</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <span class="ticket-id">#TKT-0041</span>
+                  <span style="font-size:11px;color:var(--muted);">Jun 22</span>
+                </div>
+                <div class="ticket-preview">Getting 429 errors on /v1/data endpoint during peak hours...</div>
+              </div>
+              <div class="ticket-item">
+                <div class="ticket-top">
+                  <div class="ticket-title">Invoice not received</div>
+                  <span class="status-pill pill-yellow">Pending</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <span class="ticket-id">#TKT-0038</span>
+                  <span style="font-size:11px;color:var(--muted);">Jun 18</span>
+                </div>
+                <div class="ticket-preview">June invoice hasn't arrived in our billing inbox yet...</div>
+              </div>
+              <div class="ticket-item">
+                <div class="ticket-top">
+                  <div class="ticket-title">Team member access request</div>
+                  <span class="status-pill pill-green">Resolved</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <span class="ticket-id">#TKT-0031</span>
+                  <span style="font-size:11px;color:var(--muted);">Jun 10</span>
+                </div>
+                <div class="ticket-preview">Need to add 2 new teammates to our workspace...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ CLIENT: BILLING ════ -->
+      <div class="view" id="view-billing">
+        <div class="billing-layout">
+          <div class="plan-card">
+            <div class="plan-info">
+              <h3>Pro Plan</h3>
+              <p>Billed monthly · Renews July 24, 2026</p>
+              <div style="margin-top:12px;">
+                <span class="status-pill pill-green" style="font-size:12px;">● Active</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:16px;">
+              <div class="plan-price">
+                <div class="amount">$149</div>
+                <div class="period">/ month</div>
+              </div>
+              <button class="stripe-btn" onclick="openStripe()">
+                <span class="stripe-logo">⚡</span>
+                Manage in Stripe
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-header">
+              <div>
+                <div class="card-title">Usage This Month</div>
+                <div class="card-subtitle" style="margin-bottom:0">Jun 1 – Jun 24</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                  <span style="color:var(--muted);">API Calls</span>
+                  <span style="font-family:var(--mono);">8,240 / 15,000</span>
+                </div>
+                <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+                  <div style="height:100%;width:55%;background:linear-gradient(to right,var(--accent),var(--accent2));border-radius:3px;"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                  <span style="color:var(--muted);">Storage</span>
+                  <span style="font-family:var(--mono);">4.2 GB / 20 GB</span>
+                </div>
+                <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+                  <div style="height:100%;width:21%;background:var(--green);border-radius:3px;"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                  <span style="color:var(--muted);">Team Seats</span>
+                  <span style="font-family:var(--mono);">4 / 5</span>
+                </div>
+                <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+                  <div style="height:100%;width:80%;background:var(--yellow);border-radius:3px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-header">
+              <div class="card-title">Invoice History</div>
+            </div>
+            <table class="invoice-table">
+              <thead>
+                <tr>
+                  <th>Invoice</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td style="font-family:var(--mono);font-size:12px;">#INV-2026-06</td><td>Jun 1, 2026</td><td style="font-family:var(--mono);">$149.00</td><td><span class="status-pill pill-green">Paid</span></td><td><button class="btn-sm btn-sm-muted">↓ PDF</button></td></tr>
+                <tr><td style="font-family:var(--mono);font-size:12px;">#INV-2026-05</td><td>May 1, 2026</td><td style="font-family:var(--mono);">$149.00</td><td><span class="status-pill pill-green">Paid</span></td><td><button class="btn-sm btn-sm-muted">↓ PDF</button></td></tr>
+                <tr><td style="font-family:var(--mono);font-size:12px;">#INV-2026-04</td><td>Apr 1, 2026</td><td style="font-family:var(--mono);">$149.00</td><td><span class="status-pill pill-green">Paid</span></td><td><button class="btn-sm btn-sm-muted">↓ PDF</button></td></tr>
+                <tr><td style="font-family:var(--mono);font-size:12px;">#INV-2026-03</td><td>Mar 1, 2026</td><td style="font-family:var(--mono);">$99.00</td><td><span class="status-pill pill-green">Paid</span></td><td><button class="btn-sm btn-sm-muted">↓ PDF</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ ADMIN: CLIENTS ════ -->
+      <div class="view" id="view-admin-clients">
+        <div class="admin-layout">
+          <div>
+            <div class="card" style="margin-bottom:20px;">
+              <div class="card-title">Invite a Client</div>
+              <div class="card-subtitle">They'll receive a setup email to create their account</div>
+              <div class="invite-form">
+                <div class="form-group" style="margin-bottom:0">
+                  <label class="form-label">Email Address</label>
+                  <div class="invite-row">
+                    <input class="form-input" type="email" id="invite-email" placeholder="client@company.com">
+                    <button class="btn-primary" onclick="inviteClient()">Invite</button>
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                  <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">Plan</label>
+                    <select class="form-select">
+                      <option>Starter — $49/mo</option>
+                      <option selected>Pro — $149/mo</option>
+                      <option>Enterprise — $499/mo</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">Company Name</label>
+                    <input class="form-input" type="text" placeholder="Acme Corp">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="section-header">
+                <div class="card-title">Pending Invites</div>
+                <span class="status-pill pill-yellow">2 Pending</span>
+              </div>
+              <div class="client-list">
+                <div class="client-row">
+                  <div class="client-info">
+                    <div class="avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);">?</div>
+                    <div>
+                      <div style="font-size:13px;font-weight:600;">pending@newclient.co</div>
+                      <div style="font-size:11px;color:var(--muted);">Invited Jun 20 · Pro</div>
+                    </div>
+                  </div>
+                  <div class="client-actions">
+                    <button class="btn-sm btn-sm-muted">Resend</button>
+                    <button class="btn-sm btn-sm-danger">Revoke</button>
+                  </div>
+                </div>
+                <div class="client-row">
+                  <div class="client-info">
+                    <div class="avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);">?</div>
+                    <div>
+                      <div style="font-size:13px;font-weight:600;">cfo@bigco.com</div>
+                      <div style="font-size:11px;color:var(--muted);">Invited Jun 15 · Enterprise</div>
+                    </div>
+                  </div>
+                  <div class="client-actions">
+                    <button class="btn-sm btn-sm-muted">Resend</button>
+                    <button class="btn-sm btn-sm-danger">Revoke</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-header">
+              <div class="card-title">Active Clients</div>
+              <span class="badge" id="client-count">4 Clients</span>
+            </div>
+            <div class="client-list" id="client-list">
+              <!-- populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ ADMIN: OVERVIEW ════ -->
+      <div class="view" id="view-admin-overview">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Clients</div>
+            <div class="stat-value" style="color:#3b82f6">4</div>
+            <div class="stat-delta delta-up">↑ 2 this month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">MRR</div>
+            <div class="stat-value">$596</div>
+            <div class="stat-delta delta-up">↑ $149 this month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Open Tickets</div>
+            <div class="stat-value">7</div>
+            <div class="stat-delta delta-down">↑ 3 since yesterday</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Churn Rate</div>
+            <div class="stat-value">0%</div>
+            <div class="stat-delta delta-up">No cancellations</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Client Overview</div>
+          <div class="card-subtitle">All clients and their current status</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Plan</th>
+                <th>MRR</th>
+                <th>Tickets</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Jane Doe · jane@company.com</td><td>Pro</td><td style="font-family:var(--mono);">$149</td><td>2 open</td><td><span class="status-pill pill-green">Active</span></td></tr>
+              <tr><td>Alex Chen · alex@acme.com</td><td>Starter</td><td style="font-family:var(--mono);">$49</td><td>0 open</td><td><span class="status-pill pill-green">Active</span></td></tr>
+              <tr><td>Sara Kim · sara@techco.io</td><td>Enterprise</td><td style="font-family:var(--mono);">$499</td><td>1 open</td><td><span class="status-pill pill-green">Active</span></td></tr>
+              <tr><td>Mike Ross · mike@startup.co</td><td>Pro</td><td style="font-family:var(--mono);">$149</td><td>4 open</td><td><span class="status-pill pill-yellow">Overdue</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ════ ADMIN: SETTINGS ════ -->
+      <div class="view" id="view-admin-settings">
+        <div style="max-width:560px;">
+          <div class="card" style="margin-bottom:20px;">
+            <div class="card-title">Stripe Integration</div>
+            <div class="card-subtitle">Connect your Stripe account to manage client billing</div>
+            <div class="form-group">
+              <label class="form-label">Publishable Key</label>
+              <input class="form-input" type="text" placeholder="pk_live_...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Secret Key</label>
+              <input class="form-input" type="password" placeholder="sk_live_...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Webhook Secret</label>
+              <input class="form-input" type="password" placeholder="whsec_...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Customer Portal URL</label>
+              <input class="form-input" type="text" id="stripe-portal-url" placeholder="https://billing.stripe.com/p/login/...">
+            </div>
+            <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Branding</div>
+            <div class="card-subtitle">Customize how clients see your dashboard</div>
+            <div class="form-group">
+              <label class="form-label">Company Name</label>
+              <input class="form-input" type="text" value="ClientHub">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Support Email</label>
+              <input class="form-input" type="email" placeholder="support@yourcompany.com">
+            </div>
+            <button class="btn-primary" onclick="saveSettings()">Save Branding</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ── STATE ──
+let clients = [
+  { name: 'Jane Doe', email: 'jane@company.com', plan: 'Pro', initials: 'JD', color: '#6366f1,#8b5cf6' },
+  { name: 'Alex Chen', email: 'alex@acme.com', plan: 'Starter', initials: 'AC', color: '#3b82f6,#06b6d4' },
+  { name: 'Sara Kim', email: 'sara@techco.io', plan: 'Enterprise', initials: 'SK', color: '#10b981,#059669' },
+  { name: 'Mike Ross', email: 'mike@startup.co', plan: 'Pro', initials: 'MR', color: '#f59e0b,#d97706' },
+];
+
+let currentView = 'client';
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  renderVisitorChart(rangeData['30d'].points);
+  renderRetentionGrid();
+  renderSessionBars();
+  renderClientList();
+});
+
+// ── VIEW SWITCHER ──
+function switchView(v) {
+  currentView = v;
+  document.querySelectorAll('.dev-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  if (v === 'client') {
+    document.getElementById('client-nav').style.display = '';
+    document.getElementById('admin-nav').style.display = 'none';
+    document.getElementById('view-badge').textContent = 'Client View';
+    document.getElementById('user-name').textContent = 'Jane Doe';
+    document.getElementById('user-email').textContent = 'jane@company.com';
+    document.getElementById('user-avatar').textContent = 'JD';
+    hideAllViews();
+    document.getElementById('view-analytics').classList.add('active');
+    setActiveNav(document.getElementById('client-nav').querySelector('.nav-item'));
+    document.getElementById('page-title').textContent = 'Analytics';
+  } else {
+    document.getElementById('client-nav').style.display = 'none';
+    document.getElementById('admin-nav').style.display = '';
+    document.getElementById('view-badge').textContent = 'Admin View';
+    document.getElementById('user-name').textContent = 'You (Admin)';
+    document.getElementById('user-email').textContent = 'admin@clienthub.io';
+    document.getElementById('user-avatar').textContent = '★';
+    hideAllViews();
+    document.getElementById('view-admin-clients').classList.add('active');
+    setActiveNav(document.getElementById('admin-nav').querySelector('.nav-item'));
+    document.getElementById('page-title').textContent = 'Clients';
+  }
+}
+
+function hideAllViews() {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+}
+
+function setActiveNav(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+// ── TAB SWITCHING ──
+function showTab(tab) {
+  hideAllViews();
+  document.getElementById('view-' + tab).classList.add('active');
+  document.querySelectorAll('#client-nav .nav-item').forEach(n => n.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('page-title').textContent = tab.charAt(0).toUpperCase() + tab.slice(1);
+}
+
+function showAdminTab(tab) {
+  hideAllViews();
+  document.getElementById('view-admin-' + tab).classList.add('active');
+  document.querySelectorAll('#admin-nav .nav-item').forEach(n => n.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  const titles = { clients: 'Clients', overview: 'Overview', settings: 'Settings' };
+  document.getElementById('page-title').textContent = titles[tab];
+}
+
+// ── ANALYTICS DATA ──
+const rangeData = {
+  '7d':  { visitors: 4210,  unique: 2890,  retention: 61.2, bounce: 40.1, label: 'Daily unique visitors — last 7 days',  points: [380,420,390,460,510,490,560] },
+  '30d': { visitors: 18340, unique: 11820, retention: 64.5, bounce: 38.2, label: 'Daily unique visitors — last 30 days', points: [310,290,340,380,400,370,420,390,450,470,440,510,490,530,560,520,580,610,570,600,640,620,680,650,700,670,720,750,730,780] },
+  '90d': { visitors: 52800, unique: 31400, retention: 67.8, bounce: 35.6, label: 'Weekly unique visitors — last 90 days',  points: [2100,2340,2190,2580,2710,2640,2900,3020,2980,3150,3280,3410,3380] },
+};
+let activeRange = '30d';
+
+function setRange(r, el) {
+  activeRange = r;
+  document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const d = rangeData[r];
+  document.getElementById('stat-visitors').textContent = d.visitors.toLocaleString();
+  document.getElementById('stat-unique').textContent = d.unique.toLocaleString();
+  document.getElementById('stat-retention').textContent = d.retention + '%';
+  document.getElementById('stat-bounce').textContent = d.bounce + '%';
+  document.getElementById('chart-subtitle').textContent = d.label;
+  renderVisitorChart(d.points);
+}
+
+// ── VISITOR LINE CHART (SVG) ──
+function renderVisitorChart(points) {
+  const svg = document.getElementById('visitor-svg');
+  const W = svg.parentElement.offsetWidth || 500;
+  const H = 120;
+  const pad = { top: 10, right: 10, bottom: 20, left: 30 };
+  const iW = W - pad.left - pad.right;
+  const iH = H - pad.top - pad.bottom;
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const range = max - min || 1;
+
+  const xs = points.map((_, i) => pad.left + (i / (points.length - 1)) * iW);
+  const ys = points.map(v => pad.top + iH - ((v - min) / range) * iH);
+
+  const pathD = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+  const areaD = pathD + ` L${xs[xs.length-1].toFixed(1)},${(pad.top+iH).toFixed(1)} L${pad.left},${(pad.top+iH).toFixed(1)} Z`;
+
+  // Y axis labels
+  const yLabels = [min, Math.round((min+max)/2), max].map(v =>
+    v > 999 ? (v/1000).toFixed(1)+'k' : v
+  );
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#3b82f6"/>
+        <stop offset="100%" stop-color="#06b6d4"/>
+      </linearGradient>
+      <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25"/>
+        <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <text x="${pad.left-4}" y="${pad.top+4}" font-size="9" fill="#6b7a99" text-anchor="end" font-family="JetBrains Mono,monospace">${yLabels[2]}</text>
+    <text x="${pad.left-4}" y="${pad.top+iH/2+4}" font-size="9" fill="#6b7a99" text-anchor="end" font-family="JetBrains Mono,monospace">${yLabels[1]}</text>
+    <text x="${pad.left-4}" y="${pad.top+iH+4}" font-size="9" fill="#6b7a99" text-anchor="end" font-family="JetBrains Mono,monospace">${yLabels[0]}</text>
+    <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top+iH}" stroke="#1e2d45" stroke-width="1"/>
+    <line x1="${pad.left}" y1="${pad.top+iH}" x2="${pad.left+iW}" y2="${pad.top+iH}" stroke="#1e2d45" stroke-width="1"/>
+    <path d="${areaD}" class="visitor-area"/>
+    <path d="${pathD}" class="visitor-line"/>
+    ${xs.filter((_, i) => i % Math.ceil(points.length / 6) === 0).map((x, i) => {
+      const idx = i * Math.ceil(points.length / 6);
+      return `<circle cx="${x.toFixed(1)}" cy="${ys[idx].toFixed(1)}" r="3" class="visitor-dot"/>`;
+    }).join('')}
+  `;
+}
+
+// ── RETENTION COHORT GRID ──
+function renderRetentionGrid() {
+  const cohorts = ['Week 1','Week 2','Week 3','Week 4'];
+  const weeks   = ['W0','W1','W2','W3','W4'];
+  const data = [
+    [100, 68, 52, 44, 38],
+    [100, 71, 55, 47],
+    [100, 66, 49],
+    [100, 72],
+  ];
+
+  function cellColor(v) {
+    if (v === null) return 'transparent';
+    if (v === 100) return '#3b82f6';
+    const stops = [[0,'#1e2d45'],[30,'#1e4d6b'],[50,'#1a5f7a'],[70,'#0f7a6e'],[100,'#10b981']];
+    let lo = stops[0], hi = stops[stops.length-1];
+    for (let i = 0; i < stops.length-1; i++) {
+      if (v >= stops[i][0] && v <= stops[i+1][0]) { lo = stops[i]; hi = stops[i+1]; break; }
+    }
+    const t = (v - lo[0]) / (hi[0] - lo[0]);
+    const lerp = (a,b) => Math.round(parseInt(a,16) + t*(parseInt(b,16)-parseInt(a,16))).toString(16).padStart(2,'0');
+    const c = (hex,s,e) => lerp(hex.slice(s,e),hi[1].slice(s,e));
+    return `#${c(lo[1],1,3)}${c(lo[1],3,5)}${c(lo[1],5,7)}`;
+  }
+
+  const grid = document.getElementById('retention-grid');
+  grid.innerHTML = `
+    <div class="ret-row" style="margin-bottom:4px;">
+      <div class="ret-label"></div>
+      ${weeks.map(w => `<div class="ret-head">${w}</div>`).join('')}
+    </div>
+    ${cohorts.map((c,ci) => `
+      <div class="ret-row">
+        <div class="ret-label">${c}</div>
+        ${weeks.map((_,wi) => {
+          const v = data[ci][wi] !== undefined ? data[ci][wi] : null;
+          return `<div class="ret-cell" style="background:${cellColor(v)}">${v !== null ? v+'%' : ''}</div>`;
+        }).join('')}
+      </div>
+    `).join('')}
+  `;
+}
+
+// ── SESSION DURATION BY SOURCE ──
+function renderSessionBars() {
+  const sources = [
+    { name: 'Organic Search', time: '5m 02s', pct: 100, color: '#3b82f6' },
+    { name: 'Direct',         time: '3m 48s', pct: 76,  color: '#10b981' },
+    { name: 'Social',         time: '2m 11s', pct: 44,  color: '#06b6d4' },
+    { name: 'Referral',       time: '4m 29s', pct: 89,  color: '#8b5cf6' },
+    { name: 'Other',          time: '1m 34s', pct: 31,  color: '#3d4f6b' },
+  ];
+  document.getElementById('session-bars').innerHTML = sources.map(s => `
+    <div class="session-row">
+      <div class="session-meta">
+        <span class="session-source">${s.name}</span>
+        <span class="session-time">${s.time}</span>
+      </div>
+      <div class="session-track">
+        <div class="session-fill" style="width:${s.pct}%;background:${s.color};"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── CLIENT LIST ──
+function renderClientList() {
+  const list = document.getElementById('client-list');
+  document.getElementById('client-count').textContent = `${clients.length} Clients`;
+  list.innerHTML = clients.map((c, i) => `
+    <div class="client-row">
+      <div class="client-info">
+        <div class="avatar" style="background:linear-gradient(135deg,${c.color});">${c.initials}</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;">${c.name}</div>
+          <div style="font-size:11px;color:var(--muted);">${c.email} · ${c.plan}</div>
+        </div>
+      </div>
+      <div class="client-actions">
+        <button class="btn-sm btn-sm-muted" onclick="viewAsClient(${i})">View as</button>
+        <button class="btn-sm btn-sm-danger" onclick="removeClient(${i})">Remove</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── INVITE CLIENT ──
+function inviteClient() {
+  const emailInput = document.getElementById('invite-email');
+  const email = emailInput.value.trim();
+  if (!email || !email.includes('@')) {
+    toast('⚠️ Please enter a valid email address.', '#f59e0b');
+    return;
+  }
+  const initials = email.split('@')[0].slice(0, 2).toUpperCase();
+  const colors = ['#3b82f6,#06b6d4', '#10b981,#059669', '#8b5cf6,#6366f1', '#f43f5e,#e11d48'];
+  clients.push({
+    name: email.split('@')[0],
+    email,
+    plan: 'Pro',
+    initials,
+    color: colors[clients.length % colors.length]
+  });
+  renderClientList();
+  emailInput.value = '';
+  toast(`✅ Invite sent to ${email}`);
+}
+
+function removeClient(i) {
+  const name = clients[i].name;
+  clients.splice(i, 1);
+  renderClientList();
+  toast(`🗑 ${name} removed.`, '#ef4444');
+}
+
+function viewAsClient(i) {
+  const c = clients[i];
+  document.getElementById('user-name').textContent = c.name;
+  document.getElementById('user-email').textContent = c.email;
+  document.getElementById('user-avatar').textContent = c.initials;
+  switchView('client');
+  document.querySelectorAll('.dev-btn').forEach((b, idx) => {
+    b.classList.toggle('active', idx === 0);
+  });
+  toast(`👁 Viewing as ${c.name}`);
+}
+
+// ── SUPPORT ──
+function submitTicket() {
+  toast('✅ Ticket submitted! We\'ll respond within 24 hours.');
+}
+
+// ── BILLING / STRIPE ──
+function openStripe() {
+  const url = document.getElementById('stripe-portal-url')?.value;
+  if (url && url.startsWith('https://')) {
+    window.open(url, '_blank');
+  } else {
+    toast('💳 Add your Stripe Portal URL in Admin → Settings to activate this.', '#635bff');
+  }
+}
+
+// ── SETTINGS ──
+function saveSettings() {
+  toast('✅ Settings saved.');
+}
+
+// ── TOAST ──
+function toast(msg, color = '#10b981') {
+  const t = document.getElementById('toast');
+  t.style.display = 'flex';
+  t.style.borderColor = color;
+  t.innerHTML = msg;
+  setTimeout(() => { t.style.display = 'none'; }, 3200);
+}
+</script>
+</body>
+</html>
